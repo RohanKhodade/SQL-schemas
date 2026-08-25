@@ -18,3 +18,29 @@ SELECT ph.page_id, ph.page_name, ph.url_slug, ph.level_no,
 FROM ph
 LEFT JOIN owners o ON ph.page_id = o.page_id
 ORDER BY ph.navigation_path;
+
+
+
+_---------
+WITH RECURSIVE cte AS (
+    SELECT course_id, course_name, course_level, duration_weeks,
+           prereq_id, 0 AS level_no,
+           course_name AS prereq_path
+    FROM courses
+    WHERE course_name = 'Advanced SQL'
+
+    UNION ALL
+
+    SELECT c.course_id, c.course_name, c.course_level,
+           c.duration_weeks, c.prereq_id,
+           cte.level_no + 1,
+           CONCAT(c.course_name, ' → ', cte.prereq_path)
+    FROM courses c
+    JOIN cte ON c.course_id = cte.prereq_id
+)
+SELECT c.course_id, c.course_name, c.course_level,
+       c.duration_weeks, c.level_no, c.prereq_path,
+       f.faculty_name, f.experience_years, f.specialization
+FROM cte c
+LEFT JOIN faculty f ON c.course_id = f.course_id
+ORDER BY c.level_no DESC;
